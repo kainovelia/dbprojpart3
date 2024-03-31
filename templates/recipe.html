@@ -12,9 +12,15 @@
   <div>search by {% include "_navigation.html" %}</div>
   
   <div>Recipe search: </div>
-<form method="POST" action="/add">
-<p>Name of recipe: <input type="text" name="name"> <input type="submit" value="Add"></p>
+<form method="POST" action="/search">
+<p>Search recipes: <input type="text" name="name"> <input type="submit" value="Search"></p>
 </form>
+
+<div>
+    {% for n in data %}
+    <div><a href="recipe">{{n}}</a></div>
+    {% endfor %}
+</div>
 
 </body>
 

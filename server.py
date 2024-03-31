@@ -22,35 +22,101 @@ DATABASEURI = f"postgresql://kn2596:930421@35.212.75.104/proj1part2"
 
 #Database engine
 engine = create_engine(DATABASEURI)
+
+with engine.connect() as conn:
+	create_table_command = """
+	CREATE TABLE IF NOT EXISTS input (
+		name text
+	)
+	"""
+	res = conn.execute(text(create_table_command))
+	conn.commit()
 	
 @app.before_request
 def before_request():
-	try:
-		g.conn = engine.connect()
-	except:
-		print("uh oh, problem connecting to database")
-		import traceback; traceback.print_exc()
-		g.conn = None
+    try:
+        g.conn = engine.connect()
+    except:
+        print("uh oh, problem connecting to database")
+        import traceback; traceback.print_exc()
+        g.conn = None
 
 @app.teardown_request
 def teardown_request(exception):
-	try:
-		g.conn.close()
-	except Exception as e:
-		pass
+    try:
+        g.conn.close()
+    except Exception as e:
+        pass
 
 @app.route('/')
 def index():
-	return render_template("index.html")
+    return render_template("index.html")
 
 @app.route('/ingredient')
 def ingredient():
-	return render_template("ingredient.html")
+    return render_template("ingredient.html")
 
 @app.route('/recipe')
 def recipe():
-	return render_template("recipe.html")
 
+    count_query = "SELECT count(*) FROM input"
+    cursor = g.conn.execute(text(count_query))
+
+    res = cursor.fetchone()
+    
+    count = []
+    for result in res:
+        count.append(result)
+
+    if count[0] > 0:
+        select_query = "SELECT name from input"
+        cursor = g.conn.execute(text(select_query))
+    elif count[0] <= 0:
+        select_query = "SELECT name from recipes"
+        cursor = g.conn.execute(text(select_query))
+
+    names = []
+
+    for result in cursor:
+        names.append(result[0])
+    cursor.close()
+
+    context = dict(data = names)
+
+    return render_template("recipe.html", **context)
+
+@app.route('/search', methods=['POST'])
+def search():
+
+    # clearing previous inputs
+    empty_input = """
+    DELETE FROM input
+    """
+    g.conn.execute(text(empty_input))
+    g.conn.commit()
+    # accessing form inputs from user
+    name = request.form['name']
+
+    # passing params in for each variable into query
+    params = {}
+    params["new_name"] = name
+    g.conn.execute(text('INSERT INTO input(name) VALUES (:new_name)'), params)
+    g.conn.commit()
+
+    match_query = """
+    SELECT name FROM recipes, input
+    WHERE recipes.name = input.name
+    """
+    cursor = g.conn.execute(text(match_query))
+
+    matches = []
+    for result in cursor:
+        matches.append(result[0])
+    cursor.close()
+
+    context = dict(data = names)
+
+    return redirect("recipe.html", **context)
 
 if __name__ == "__main__":
 	import click
