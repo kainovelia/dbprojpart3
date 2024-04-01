@@ -1,0 +1,48 @@
+<html>
+  <style>
+    body{
+      font-size: 15pt;
+      font-family: arial;
+    }
+  </style>
+
+
+<body>
+  <h1>Ingredient-Recipe Matcher</h1>
+  <div>search by {% include "_navigation.html" %}</div>
+
+  <h2>Search by recipe filters</h2>
+  <div>
+          <form method='POST' action='/recipe_search'>
+                  <input type="submit" name='show' value="Show All Recipes">
+                  <input type="submit" name='show' value="Search by Contributor">
+                  <input type="submit" name='show' value="Search by Name">
+                  <input type="submit" name='show' value="Search by Cuisine">
+          </form>
+  </div>
+<form method="POST" action="/search">
+<p>Search contributor name: <input type="text" name="name"> <input type="submit" value="Search"></p>
+</form>
+
+<div>Recipes by {{name}}:</div>
+
+<table style="width:50%" border="1">
+          <tr>
+                  <th>Name</th>
+                  <th>Time Needed</th>
+                  <th>Calories</th>
+                  <th>Cuisine</th>
+          </tr>
+          {% for row in data %}
+          <tr>
+                  <td>{{row[2]}}</td>
+                  <td>{{row[4]}}</td>
+                  <td>{{row[5]}}</td>
+                  <td>{{row[6]}}</td>
+          </tr>
+          {% endfor %}
+  </table>
+</body>
+
+
+</html>

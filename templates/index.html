@@ -11,6 +11,23 @@
   <h1>Ingredient-Recipe Matcher</h1>
   <div>search by {% include "_navigation.html" %}</div>
 
+  <div>All Recipes:</div>
+  <table style="width:50%" border="1">
+	  <tr>
+		  <th>Name</th>
+		  <th>Time Needed</th>
+		  <th>Calories</th>
+		  <th>Cuisine</th>
+	  </tr>
+	  {% for row in data %}
+	  <tr>
+		  <td>{{row[2]}}</td>
+		  <td>{{row[4]}}</td>
+		  <td>{{row[5]}}</td>
+		  <td>{{row[6]}}</td>
+	  </tr>
+	  {% endfor %}
+  </table>
 </body>
 
 

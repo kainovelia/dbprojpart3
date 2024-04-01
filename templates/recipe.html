@@ -10,18 +10,52 @@
 <body>
   <h1>Ingredient-Recipe Matcher</h1>
   <div>search by {% include "_navigation.html" %}</div>
-  
-  <div>Recipe search: </div>
-<form method="POST" action="/search">
-<p>Search recipes: <input type="text" name="name"> <input type="submit" value="Search"></p>
+
+  <h2>Search by recipe filters</h2>
+  <div>
+	  <form method='POST' action='/recipe/searchby'>
+		  <input type="submit" name='show' value="Show All Recipes">
+		  <input type="submit" name='show' value="Search by Contributor">
+		  <input type="submit" name='show' value="Search by Name">
+		  <input type="submit" name='show' value="Search by Cuisine">
+	  </form>
+  </div>
+
+  {% if search=='contributor' %}
+<form method="POST" action="/search_contributor">
+	<p>Search {{search}}: <input type="text" name="name"> <input type="submit" value="Search"></p>
 </form>
+{% elif search=='name' %}
+<form method="POST" action="/search_name">
+        <p>Search {{search}}: <input type="text" name="name"> <input type="submit" value="Search"></p>
+</form>
+{% elif search=='cuisine' %}
+<form method="POST" action="/search_cuisine">
+        <p>Search {{search}}: <input type="text" name="name"> <input type="submit" value="Search"></p>
+</form>
+{% else %}
+{% endif %}
 
-<div>
-    {% for n in data %}
-    <div><a href="recipe">{{n}}</a></div>
-    {% endfor %}
-</div>
+<table style="width:50%" border="1">
+          <tr>
+                  <th>Name</th>
+                  <th>Time Needed</th>
+                  <th>Calories</th>
+                  <th>Cuisine</th>
+          </tr>
+          {% for row in data %}
+          <tr>
+                  <td>{{row[2]}}</td>
+                  <td>{{row[4]}}</td>
+                  <td>{{row[5]}}</td>
+                  <td>{{row[6]}}</td>
+          </tr>
+          {% endfor %}
+  </table>
 
+  {% if data|length == 0 %}
+  <div>No matching results found</div>
+  {% endif %}
 </body>
 
 

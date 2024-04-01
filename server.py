@@ -50,7 +50,16 @@ def teardown_request(exception):
 
 @app.route('/')
 def index():
-    return render_template("index.html")
+    select_query = "SELECT * FROM recipes"
+    cursor = g.conn.execute(text(select_query))
+
+    rows = []
+    for row in cursor:
+        rows.append(row)
+    cursor.close()
+
+    context = dict(data = rows)
+    return render_template("index.html", **context)
 
 @app.route('/ingredient')
 def ingredient():
@@ -58,65 +67,78 @@ def ingredient():
 
 @app.route('/recipe')
 def recipe():
+    return render_template("recipe.html")
 
-    count_query = "SELECT count(*) FROM input"
-    cursor = g.conn.execute(text(count_query))
+@app.route('/recipe/searchby', methods=['POST'])
+def recipe_search():
 
-    res = cursor.fetchone()
-    
-    count = []
-    for result in res:
-        count.append(result)
+    searchby = request.form['show']
 
-    if count[0] > 0:
-        select_query = "SELECT name from input"
-        cursor = g.conn.execute(text(select_query))
-    elif count[0] <= 0:
-        select_query = "SELECT name from recipes"
+    if searchby=="Show All Recipes":
+        select_query = "SELECT * FROM recipes"
         cursor = g.conn.execute(text(select_query))
 
-    names = []
+        rows = []
+        for row in cursor:
+            rows.append(row)
+        cursor.close()
 
-    for result in cursor:
-        names.append(result[0])
-    cursor.close()
-
-    context = dict(data = names)
-
-    return render_template("recipe.html", **context)
+        context = dict(data = rows)
+        return render_template("recipe.html", **context, search='all')
+    elif searchby=="Search by Contributor":
+        return render_template("recipe.html", search='contributor')
+    elif searchby=="Search by Name":
+        return render_template("recipe.html", search='name')
+    elif searchby=="Search by Cuisine":
+        return render_template("recipe.html", search='cuisine')
 
 @app.route('/search', methods=['POST'])
 def search():
+    return redirect("/")
 
-    # clearing previous inputs
-    empty_input = """
-    DELETE FROM input
+@app.route('/search_contributor', methods=['POST'])
+def contributor():
+
+    cont_name = request.form['name']
+
+    id_query= f"""
+    SELECT contributor_id FROM contributors
+    WHERE name='{cont_name}'
     """
-    g.conn.execute(text(empty_input))
-    g.conn.commit()
-    # accessing form inputs from user
-    name = request.form['name']
 
-    # passing params in for each variable into query
-    params = {}
-    params["new_name"] = name
-    g.conn.execute(text('INSERT INTO input(name) VALUES (:new_name)'), params)
-    g.conn.commit()
+    cursor = g.conn.execute(text(id_query)) 
+    cont_id=[]
 
-    match_query = """
-    SELECT name FROM recipes, input
-    WHERE recipes.name = input.name
-    """
-    cursor = g.conn.execute(text(match_query))
+    for row in cursor:
+        cont_id.append(row[0])
 
-    matches = []
-    for result in cursor:
-        matches.append(result[0])
-    cursor.close()
+    try:
+        result_query = f"""
+        SELECT * FROM recipes
+        WHERE contributor_id='{cont_id[0]}'
+        """
 
-    context = dict(data = names)
+        cursor = g.conn.execute(text(result_query))
 
-    return redirect("recipe.html", **context)
+        rows = []
+
+        for row in cursor:
+            rows.append(row)
+        cursor.close()
+        context=dict(data=rows)
+    except:
+
+        context=dict(data=cont_id)
+    
+    return render_template("recipe.html", **context, search='contributor')
+    
+ 
+
+
+
+
+
+
 
 if __name__ == "__main__":
 	import click
