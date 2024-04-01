@@ -10,6 +10,7 @@ import os
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
 from flask import Flask, request, render_template, g, redirect, Response
+from collections import Counter
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
@@ -31,6 +32,21 @@ with engine.connect() as conn:
 	"""
 	res = conn.execute(text(create_table_command))
 	conn.commit()
+
+#matching function
+def match_level(pantry_ingredients, recipe_ingredients):
+    pantry_counter = Counter(pantry_ingredients)
+    recipe_counter = Counter(recipe_ingredients)
+    
+    common_ingredients = pantry_counter & recipe_counter
+    pantry_missing = recipe_counter - pantry_counter
+    
+    if len(common_ingredients) == len(recipe_counter):
+        return 'exact match'
+    elif len(common_ingredients) > 0:
+        return 'close match'
+    else:
+        return 'not-as-close match'
 	
 @app.before_request
 def before_request():
