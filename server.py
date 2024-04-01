@@ -119,9 +119,17 @@ def ingredient_search():
     WHERE i.name ILIKE :ingredient_name
     """
     results = g.conn.execute(text(query), ingredient_name='%{}%'.format(ingredient_name))
-    recipe_names = [row[0] for row in results]
-    results.close()
+	
+    exact_match_recipes = []
+    close_match_recipes = []
+    not_as_close_match_recipes = []
 
+    for row in results:
+	    recipe_id, recipe_name = row
+	    recipe_ingredients = [] #get recipe ingredients!!
+    #gotta fix above, finish sorting
+    results.close()
+	
     # Pass the recipe names to the search results template
     return render_template('search_results.html', recipes=recipe_names)
 
