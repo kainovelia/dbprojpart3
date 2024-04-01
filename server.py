@@ -2,7 +2,7 @@
 COMS4111 - Intro to Databases
 Project Part 3 
 by Karin Novelia (kn2596)
-and Gianna Cilluffo
+and Gianna Cilluffo (gpc2128)
 """
 
 import os
@@ -10,6 +10,7 @@ import os
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
 from flask import Flask, request, render_template, g, redirect, Response
+from collections import Counter
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
@@ -31,6 +32,21 @@ with engine.connect() as conn:
 	"""
 	res = conn.execute(text(create_table_command))
 	conn.commit()
+
+#matching function
+def match_level(pantry_ingredients, recipe_ingredients):
+    pantry_counter = Counter(pantry_ingredients)
+    recipe_counter = Counter(recipe_ingredients)
+    
+    common_ingredients = pantry_counter & recipe_counter
+    pantry_missing = recipe_counter - pantry_counter
+    
+    if len(common_ingredients) == len(recipe_counter):
+        return 'exact match'
+    elif len(common_ingredients) > 0:
+        return 'close match'
+    else:
+        return 'not-as-close match'
 	
 @app.before_request
 def before_request():
@@ -91,6 +107,38 @@ def recipe_search():
         return render_template("recipe.html", search='name')
     elif searchby=="Search by Cuisine":
         return render_template("recipe.html", search='cuisine')
+
+#adding ingredient-specific search	
+@app.route('/ingredient_search')
+def ingr_search_page():
+    return render_template("ingredient_search.html")
+
+@app.route('/ingredient_search', methods=['POST'])
+def ingredient_search():
+    ingredient_name = request.form.get('ingredient_name')
+
+    #search for recipes based on ingredient
+    query = """
+    SELECT r.name 
+    FROM recipes r 
+    JOIN recipe_ingredients ri ON r.recipe_id = ri.recipe_id
+    JOIN ingredients i ON ri.ingredient_id = i.ingredient_id
+    WHERE i.name ILIKE :ingredient_name
+    """
+    results = g.conn.execute(text(query), ingredient_name='%{}%'.format(ingredient_name))
+	
+    exact_match_recipes = []
+    close_match_recipes = []
+    not_as_close_match_recipes = []
+
+    for row in results:
+	    recipe_id, recipe_name = row
+	    recipe_ingredients = [] #get recipe ingredients!!
+    #gotta fix above, finish sorting
+    results.close()
+	
+    # Pass the recipe names to the search results template
+    return render_template('search_results.html', recipes=recipe_names)
 
 @app.route('/search', methods=['POST'])
 def search():

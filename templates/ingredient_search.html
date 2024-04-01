@@ -1,0 +1,19 @@
+<html>
+<head>
+    <style>
+        body{ 
+          font-size: 15pt;
+          font-family: arial;
+        }
+    </style>
+    <title>Search Recipes by Ingredient</title>
+</head>
+<body>
+    <h1>Search Recipes by Ingredient</h1>
+    <form action="{{ url_for('search') }}" method="post">
+        <label for="ingredient_name">Enter Ingredient Name(s) (separated by commas):</label><br>
+        <textarea id="ingredient_name" name="ingredient_name" rows="4" cols="50" required></textarea><br>
+        <button type="submit">Search</button>
+    </form>
+</body>
+</html> 

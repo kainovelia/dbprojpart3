@@ -1,0 +1,36 @@
+<html>
+  <style>
+    body{ 
+      font-size: 15pt;
+      font-family: arial;
+    }
+  </style>
+<head>
+    <title>Search Results</title>
+</head>
+<body>
+    <h1>Search Results</h1>
+    {% if recipes %}
+        <h2>Exact Matches:</h2>
+        <ul>
+            {% for recipe in recipes['exact'] %}
+                <li>{{ recipe }}</li>
+            {% endfor %}
+        </ul>
+        <h2>Close Matches:</h2>
+        <ul>
+            {% for recipe in recipes['close'] %}
+                <li>{{ recipe }}</li>
+            {% endfor %}
+        </ul>
+        <h2>Not-As-Close Matches:</h2>
+        <ul>
+            {% for recipe in recipes['not_close'] %}
+                <li>{{ recipe }}</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No recipes found.</p>
+    {% endif %}
+</body>
+</html>
