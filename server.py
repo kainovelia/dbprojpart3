@@ -2,7 +2,7 @@
 COMS4111 - Intro to Databases
 Project Part 3 
 by Karin Novelia (kn2596)
-and Gianna Cilluffo
+and Gianna Cilluffo (gpc2128)
 """
 
 import os
@@ -84,6 +84,31 @@ def recipe():
     context = dict(data = names)
 
     return render_template("recipe.html", **context)
+	
+#adding ingredient-specific search	
+@app.route('/ingredient_search')
+def ingr_search_page():
+    return render_template("ingredient_search.html")
+
+@app.route('/ingredient_search', methods=['POST'])
+def ingredient_search():
+    ingredient_name = request.form.get('ingredient_name')
+
+    #search for recipes based on ingredient
+    query = """
+    SELECT r.name 
+    FROM recipes r 
+    JOIN recipe_ingredients ri ON r.recipe_id = ri.recipe_id
+    JOIN ingredients i ON ri.ingredient_id = i.ingredient_id
+    WHERE i.name ILIKE :ingredient_name
+    """
+    results = g.conn.execute(text(query), ingredient_name='%{}%'.format(ingredient_name))
+    recipe_names = [row[0] for row in results]
+    results.close()
+
+    # Pass the recipe names to the search results template
+    return render_template('search_results.html', recipes=recipe_names)
+
 
 @app.route('/search', methods=['POST'])
 def search():
