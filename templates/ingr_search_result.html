@@ -11,8 +11,21 @@
 <body>
     <h1>Search Results</h1>
     {% if recipes %}
+        <h2>Exact Matches:</h2>
         <ul>
-            {% for recipe in recipes %}
+            {% for recipe in recipes['exact'] %}
+                <li>{{ recipe }}</li>
+            {% endfor %}
+        </ul>
+        <h2>Close Matches:</h2>
+        <ul>
+            {% for recipe in recipes['close'] %}
+                <li>{{ recipe }}</li>
+            {% endfor %}
+        </ul>
+        <h2>Not-As-Close Matches:</h2>
+        <ul>
+            {% for recipe in recipes['not_close'] %}
                 <li>{{ recipe }}</li>
             {% endfor %}
         </ul>
