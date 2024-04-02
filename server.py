@@ -113,8 +113,8 @@ def ingredient_search():
 
 
     all_recipes_query = """
-    SELECT r.recipe_id, r.name, i.name AS ingredient_name
-    FROM recipes r 
+    SELECT r.recipe_id, r.name
+    FROM Recipes r 
     JOIN uses_ingredients ui ON r.recipe_id = ui.recipe_id
     JOIN ingredients i ON ui.ingredient_id = i.ingredient_id
     """
