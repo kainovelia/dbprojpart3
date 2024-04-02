@@ -109,6 +109,8 @@ def ingr_search_page():
 @app.route('/ingredient_search', methods=['POST'])
 def ingredient_search():
     ingredient_name = request.form.get('ingredient_name')
+    ingredients_list = [ingredient.strip() for ingredient in ingredient_name.split(',')]
+
 
     all_recipes_query = """
     SELECT r.recipe_id, r.name, i.name AS ingredient_name
@@ -126,8 +128,6 @@ def ingredient_search():
         recipes[recipe_id]['ingredients'].append(recipe_ingredient)
 
     all_recipes_results.close()
-
-    pantry_ingredients = request.form.getlist('pantry_ingredients')
 	
     exact_match_recipes = []
     close_match_recipes = []
@@ -138,7 +138,7 @@ def ingredient_search():
         recipe_name = recipe_data['recipe_name']
         recipe_ingredients = recipe_data['ingredients']
 	    
-        match = match_level(pantry_ingredients, recipe_ingredients)
+        match = match_level(ingredients_list, recipe_ingredients)
         if match == 'exact match':
             exact_match_recipes.append({'recipe_id': recipe_id, 'recipe_name': recipe_name})
         elif match == 'close match':
@@ -146,7 +146,7 @@ def ingredient_search():
         else:
             not_as_close_match_recipes.append({'recipe_id': recipe_id, 'recipe_name': recipe_name})
 
-    return render_template('search_results.html', exact_match_recipes=exact_match_recipes, close_match_recipes=close_match_recipes, not_as_close_match_recipes=not_as_close_match_recipes)
+    return render_template('ingr_search_result.html', exact_match_recipes=exact_match_recipes, close_match_recipes=close_match_recipes, not_as_close_match_recipes=not_as_close_match_recipes)
 
 
 @app.route('/search', methods=['POST'])
