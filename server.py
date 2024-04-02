@@ -115,8 +115,8 @@ def ingredient_search():
     all_recipes_query = """
     SELECT r.recipe_id, r.name, i.name AS ingredient_name
     FROM recipes r 
-    JOIN recipe_ingredients ri ON r.recipe_id = ri.recipe_id
-    JOIN ingredients i ON ri.ingredient_id = i.ingredient_id
+    JOIN uses_ingredients ui ON r.recipe_id = ui.recipe_id
+    JOIN ingredients i ON ui.ingredient_id = i.ingredient_id
     """
     all_recipes_results = g.conn.execute(text(all_recipes_query))
 	
