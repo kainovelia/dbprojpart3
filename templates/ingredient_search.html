@@ -10,10 +10,31 @@
 </head>
 <body>
     <h1>Search Recipes by Ingredient</h1>
-    <form action="{{ url_for('search') }}" method="post">
+    <form action="/ingredient_search" method="POST">
         <label for="ingredient_name">Enter Ingredient Name(s) (separated by commas):</label><br>
         <textarea id="ingredient_name" name="ingredient_name" rows="4" cols="50" required></textarea><br>
         <button type="submit">Search</button>
     </form>
+
+    <table style="width:50%" border="1">
+          <tr>
+                  <th>Name</th>
+                  <th>Time Needed</th>
+                  <th>Calories</th>
+                  <th>Cuisine</th>
+          </tr>
+          {% for row in data %}
+          <tr>
+                  <td>{{row[2]}}</td>
+                  <td>{{row[4]}}</td>
+                  <td>{{row[5]}}</td>
+                  <td>{{row[6]}}</td>
+          </tr>
+          {% endfor %}
+  </table>
+
+  {% if data|length == 0 %}
+  <div>No matching results found</div>
+  {% endif %}
 </body>
 </html> 

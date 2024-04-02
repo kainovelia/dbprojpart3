@@ -79,7 +79,7 @@ def index():
 
 @app.route('/ingredient')
 def ingredient():
-    return render_template("ingredient.html")
+    return render_template("ingredient_search.html")
 
 @app.route('/recipe')
 def recipe():
@@ -107,7 +107,10 @@ def recipe_search():
         return render_template("recipe.html", search='name')
     elif searchby=="Search by Cuisine":
         return render_template("recipe.html", search='cuisine')
+    elif searchby=="Search by Rating":
+        return render_template("recipe.html", search='rating')
 
+    
 #adding ingredient-specific search	
 @app.route('/ingredient_search')
 def ingr_search_page():
@@ -117,37 +120,67 @@ def ingr_search_page():
 def ingredient_search():
     ingredient_name = request.form.get('ingredient_name')
 
-    #search for recipes based on ingredient
-    query = """
-    SELECT r.name 
-    FROM recipes r 
-    JOIN recipe_ingredients ri ON r.recipe_id = ri.recipe_id
-    JOIN ingredients i ON ri.ingredient_id = i.ingredient_id
-    WHERE i.name ILIKE :ingredient_name
-    """
-    results = g.conn.execute(text(query), ingredient_name='%{}%'.format(ingredient_name))
-	
-    exact_match_recipes = []
-    close_match_recipes = []
-    not_as_close_match_recipes = []
+    ingredients_list = [ingredient.strip() for ingredient in ingredient_name.split(',')]
 
-    for row in results:
-	    recipe_id, recipe_name = row
-	    recipe_ingredients = [] #get recipe ingredients!!
-    #gotta fix above, finish sorting
-    results.close()
-	
-    # Pass the recipe names to the search results template
-    return render_template('search_results.html', recipes=recipe_names)
+    ingredient_ids = []
 
-@app.route('/search', methods=['POST'])
-def search():
-    return redirect("/")
+    for ingredient in ingredients_list:
+
+        ingr_id_query = f"""
+        SELECT ingredient_id FROM ingredients
+        WHERE name = '{ingredient}'
+        """
+        cursor = g.conn.execute(text(ingr_id_query))
+        for row in cursor:
+            ingredient_ids.append(row)
+
+
+    recipe_query_list =[]
+    for item in ingredient_ids: 
+        recipe_query = f"""
+        (SELECT recipe_id, ingredient_id FROM uses_ingredients
+        WHERE ingredient_id='{item[0]}')
+        """
+        recipe_query_list.append(recipe_query)
+    
+    join_query = "SELECT recipe_id, count(*) FROM ("
+
+    join_query = join_query + recipe_query_list.pop()
+
+    results_id = []
+
+    for query in recipe_query_list:
+
+        join_query = join_query + "UNION" + query
+
+    join_query = join_query + ") GROUP BY recipe_id ORDER BY count(*) DESC"
+
+    cursor = g.conn.execute(text(join_query))
+        
+    for row in cursor:
+        results_id.append(row[0])
+
+    final_rows = []
+    for item in results_id:
+        final_query = f"""
+        SELECT * FROM recipes
+        WHERE recipe_id = '{item}'
+        """
+
+        cursor = g.conn.execute(text(final_query))
+        for row in cursor:
+            final_rows.append(row)
+
+    context=dict(data=final_rows)
+
+    return render_template("/ingredient_search.html", **context)
 
 @app.route('/search_contributor', methods=['POST'])
 def contributor():
 
     cont_name = request.form['name']
+
+    name = cont_name
 
     id_query= f"""
     SELECT contributor_id FROM contributors
@@ -178,15 +211,84 @@ def contributor():
 
         context=dict(data=cont_id)
     
-    return render_template("recipe.html", **context, search='contributor')
+    return render_template("recipe.html", **context, search='contributor', name='{cont_name}')
     
- 
+@app.route('/search_name', methods=['POST'])
+def recipe_name():
 
+    recipe_name = request.form['name']
 
+    recipe_query= f"""
+    SELECT * FROM recipes
+    WHERE name='{recipe_name}'
+    """
 
+    cursor = g.conn.execute(text(recipe_query))
 
+    rows = []
 
+    for row in cursor:
+        rows.append(row)
+    cursor.close()
+    context=dict(data=rows)
 
+    return render_template("recipe.html", **context, search='name')
+
+@app.route('/search_cuisine', methods=['POST'])
+def cuisine():
+
+    cuisine_name = request.form['name']
+
+    cuisine_query= f"""
+    SELECT * FROM recipes
+    WHERE cuisine ='{cuisine_name}'
+    """
+
+    cursor = g.conn.execute(text(cuisine_query))
+
+    rows = []
+
+    for row in cursor:
+        rows.append(row)
+    cursor.close()
+    context=dict(data=rows)
+
+    return render_template("recipe.html", **context, search='cuisine')
+
+@app.route('/search_rating', methods=['POST'])
+def rating():
+    rating = request.form['rating']
+
+    recipe_id_query= f"""
+    SELECT * FROM rate
+    WHERE rating='{rating}'
+    """
+
+    cursor = g.conn.execute(text(recipe_id_query))
+
+    recipe_id=[]
+
+    for row in cursor:
+        recipe_id.append(row[0])
+
+    try:
+        result_query = f"""
+        SELECT * FROM recipes
+        WHERE recipe_id='{recipe_id[0]}'
+        """
+        cursor = g.conn.execute(text(result_query))
+
+        rows = []
+
+        for row in cursor:
+            rows.append(row)
+        cursor.close()
+        context=dict(data=rows)
+    except:
+
+        context=dict(data=recipe_id)
+
+    return render_template("recipe.html", **context, search='rating')
 
 if __name__ == "__main__":
 	import click
