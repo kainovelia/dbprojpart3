@@ -110,28 +110,43 @@ def ingr_search_page():
 def ingredient_search():
     ingredient_name = request.form.get('ingredient_name')
 
-    #search for recipes based on ingredient
-    query = """
-    SELECT r.name 
+    all_recipes_query = """
+    SELECT r.recipe_id, r.name, i.name AS ingredient_name
     FROM recipes r 
     JOIN recipe_ingredients ri ON r.recipe_id = ri.recipe_id
     JOIN ingredients i ON ri.ingredient_id = i.ingredient_id
-    WHERE i.name ILIKE :ingredient_name
     """
-    results = g.conn.execute(text(query), ingredient_name='%{}%'.format(ingredient_name))
+    all_recipes_results = g.conn.execute(text(all_recipes_query))
+	
+    recipes = {}
+    for row in all_recipes_results:
+        recipe_id, recipe_name, recipe_ingredient = row
+        if recipe_id not in recipes:
+            recipes[recipe_id] = {'recipe_name': recipe_name, 'ingredients': []}
+        recipes[recipe_id]['ingredients'].append(recipe_ingredient)
+
+    all_recipes_results.close()
+
+    pantry_ingredients = request.form.getlist('pantry_ingredients')
 	
     exact_match_recipes = []
     close_match_recipes = []
     not_as_close_match_recipes = []
-
-    for row in results:
-	    recipe_id, recipe_name = row
-	    recipe_ingredients = [] #get recipe ingredients!!
-    #gotta fix above, finish sorting
-    results.close()
 	
-    # Pass the recipe names to the search results template
-    return render_template('search_results.html', recipes=recipe_names)
+    #iterate through each recipe to determine its match level
+    for recipe_id, recipe_data in recipes.items():
+        recipe_name = recipe_data['recipe_name']
+        recipe_ingredients = recipe_data['ingredients']
+	    
+        match = match_level(pantry_ingredients, recipe_ingredients)
+        if match == 'exact match':
+            exact_match_recipes.append({'recipe_id': recipe_id, 'recipe_name': recipe_name})
+        elif match == 'close match':
+            close_match_recipes.append({'recipe_id': recipe_id, 'recipe_name': recipe_name})
+        else:
+            not_as_close_match_recipes.append({'recipe_id': recipe_id, 'recipe_name': recipe_name})
+
+    return render_template('search_results.html', exact_match_recipes=exact_match_recipes, close_match_recipes=close_match_recipes, not_as_close_match_recipes=not_as_close_match_recipes)
 
 
 @app.route('/search', methods=['POST'])
